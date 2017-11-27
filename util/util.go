@@ -2,9 +2,10 @@ package util
 
 import (
     "flag"
-    "bytes"
     "strings"
     "path"
+    "path/filepath"
+    "os/user"
 )
 
 type Configuration struct {
@@ -21,7 +22,7 @@ var ARCHIVE_URL string = "https://www.hellointernet.fm/archive/"
 var RSS_URL string = "http://www.hellointernet.fm/podcast?format=rss"
 var DOWNLOAD_ALL bool = false
 var FILES_PATH string = "~/.local/share/HI_scraper"
-var DOWNLOAD_DIR string = "~/downloads/HI"
+var DOWNLOAD_DIR string = filepath.Join (get_home_dir(), "downloads/HI")
 var VERBOSE bool = false
 /***********/
 
@@ -38,18 +39,17 @@ func Get_parameters() Configuration {
     return Configuration {*archive_ptr, *rss_ptr, *files_ptr, *download_dir_ptr, *verbose_ptr, *all_ptr}
 }
 
-func Concat (str ...string) string {
-    var buf bytes.Buffer
-
-    for _,s := range str {
-        buf.WriteString(s)
-    }
-
-    return buf.String()
-}
-
 func Get_name (url string) string {
     name := path.Base (url)
 
-    return name[:strings.LastIndex(name, "?")]
+    if li := strings.LastIndex(name, "?"); li > -1 {
+        return name[:li]
+    }
+
+    return name
+}
+
+func get_home_dir () string {
+    usr,_ := user.Current()
+    return usr.HomeDir
 }
