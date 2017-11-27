@@ -2,51 +2,19 @@ package main
 
 import (
     "fmt"
-    "flag"
     "net/http"
     "io"
     "os"
     "log"
-    "./bar"
+    "./util"
 )
-
-type configuration struct {
-    ARCHIVE string
-    RSS string
-    files_path string
-    download_dir string
-    verbose bool
-    all bool
-}
-
-/* globals */
-var ARCHIVE_URL string = "https://www.hellointernet.fm/archive/"
-var RSS_URL string = "http://www.hellointernet.fm/podcast?format=rss"
-var DOWNLOAD_ALL bool = false
-var FILES_PATH string = "~/.local/share/HI_scraper"
-var DOWNLOAD_DIR string = "~/downloads/HI"
-var VERBOSE bool = false
-/***********/
 
 func main() {
     config := get_parameters()
     download_episodes (config)
 }
 
-func get_parameters() configuration {
-    archive_ptr := flag.String("archive", ARCHIVE_URL, "Archive's URL")
-    rss_ptr := flag.String("rss", RSS_URL, "RSS URL")
-    all_ptr := flag.Bool("all", DOWNLOAD_ALL, "Download all available episodes")
-    files_ptr := flag.String("files", FILES_PATH, "Control files directory")
-    download_dir_ptr := flag.String("d", DOWNLOAD_DIR, "Directory where episodes will be stored")
-    verbose_ptr := flag.Bool("v", VERBOSE, "Verbose output")
-
-    flag.Parse()
-
-    return configuration {*archive_ptr, *rss_ptr, *files_ptr, *download_dir_ptr, *verbose_ptr, *all_ptr}
-}
-
-func download_episodes (config configuration) {
+func download_episodes (config util.Configuration) {
     var episodes []string
 
     if (config.all) {
@@ -64,7 +32,7 @@ func download_episodes (config configuration) {
     download (episodes, config)
 }
 
-func download (eps []string, config configuration) {
+func download (eps []string, config util.Configuration) {
     for _,url := range eps {
         res,err := http.Get(url)
         if err != nil {
@@ -72,14 +40,15 @@ func download (eps []string, config configuration) {
         }
 
         // create file
-        f,err := os.Create ( concat (config.download_dir, get_name(url)) )
+        f,err := os.Create ( util.Concat (config.Download_dir, util.Get_name(url)) )
         if err != nil {
             log.Fatal(err)
         }
 
         // if verbose, set up progress bar
         if verbose {
-            bar.Setup(100)
+            //bar.Setup(100)
+            fmt.Pritln("setup bar")
         }
 
         // create a buffer and start downloading
@@ -100,9 +69,14 @@ func download (eps []string, config configuration) {
             if err != nil {
                 log.Fatal(err)
             }
+
+            // if verbose update bar
+            if verbose {
+                fmt.Printf("update bar: %s\n", written)
+            }
         }
 
-        // close things
+        // close open stuff
         res.Body.Close()
         f.Close()
     }
