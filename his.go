@@ -7,6 +7,7 @@ import (
     "os"
     "log"
     "path/filepath"
+    "strconv"
     "./util"
 )
 
@@ -34,18 +35,21 @@ func download_episodes (config util.Configuration) {
 
     // if verbose count fetched links
     if config.Verbose {
-        fmt.Printf("%d episodes fetched!\n", len(episodes))
+        fmt.Printf("%d episode(s) fetched!\n", len(episodes))
     }
 
     download (episodes, config)
 }
 
 func download (eps []string, config util.Configuration) {
-    for _,url := range eps {
+    for i,url := range eps {
+        // send http request
         res,err := http.Get(url)
         if err != nil {
             log.Fatal(err)
         }
+        // get file size and convert it to mb
+        file_size,_ := strconv.Atoi (res.Header.Get("Content-Length"))
 
         // create file
         f,err := os.Create ( filepath.Join (config.Download_dir, util.Get_name(url)) )
@@ -53,14 +57,9 @@ func download (eps []string, config util.Configuration) {
             log.Fatal(err)
         }
 
-        // if verbose, set up progress bar
-        if config.Verbose {
-            //bar.Setup(100)
-            fmt.Println("setup bar")
-        }
-
         // create a buffer and start downloading
         b := make([]byte, 4*1024)
+        total := 0 // written until now
         for {
             // read from stream
             n,err := res.Body.Read(b)
@@ -77,10 +76,11 @@ func download (eps []string, config util.Configuration) {
             if err != nil {
                 log.Fatal(err)
             }
+            total += written
 
             // if verbose update bar
             if config.Verbose {
-                fmt.Printf("update bar: %d\n", written)
+                util.Update_bar (i, len(eps), total, file_size)
             }
         }
 
@@ -88,6 +88,10 @@ func download (eps []string, config util.Configuration) {
         res.Body.Close()
         f.Close()
 
+        // if verbose finish bar
+        if config.Verbose {
+            util.Finish_bar (i, len(eps))
+        }
     }
 }
 
