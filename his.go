@@ -8,6 +8,8 @@ import (
     "log"
     "path/filepath"
     "strconv"
+    "encoding/xml"
+    "golang.org/x/net/html"
     "./util"
 )
 
@@ -19,12 +21,7 @@ func main() {
 func download_episodes (config util.Configuration) {
     var episodes []string
 
-    if (config.All) {
-        episodes = fetch_all_episodes(config)
-
-    }else {
-        episodes = fetch_new_episodes(config)
-    }
+    episodes = fetch_episodes (config)
 
     if len(episodes) == 0 {
         if config.Verbose {
@@ -84,23 +81,52 @@ func download (eps []string, config util.Configuration) {
             }
         }
 
-        // close open stuff
-        res.Body.Close()
-        f.Close()
-
         // if verbose finish bar
         if config.Verbose {
             util.Finish_bar (i, len(eps))
         }
+
+        // close open stuff
+        res.Body.Close()
+        f.Close()
     }
 }
 
-func fetch_all_episodes (config util.Configuration) (urls []string) {
-    urls = []string{"http://hwcdn.libsyn.com/p/a/1/9/a195a79840d036db/HI92.mp3?c_id=17903889&expiration=1511807679&hwt=f34d3136a5b0534f9727ea29636cf9ec",}
-    return
-}
+func fetch_episodes (config util.Configuration) (urls []string) {
+    var watched []int
 
-func fetch_new_episodes (config util.Configuration) (urls []string) {
-    var s []string
-    return s
+    if (!config.All) {
+        fmt.Println("all")
+    }
+
+    // get rss xml
+    res,err := http.Get (config.RSS)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer res.Body.Close()
+
+    dec := xml.NewDecoder (res.Body)
+
+    for {
+        // read tokens from XML in body stream
+        t,err := dec.Token()
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        if t == nil {
+            break
+        }
+
+        // check link tag
+        switch s := t.(type) {
+        case xml.StartElement:
+            if s.Name.Local == "enclosure" {
+                if watched_ep (s.Attr[0].Value, watched) {
+                    urls = append (urls, s.Attr[0].Value)
+                }
+            }
+        }
+    }
 }
