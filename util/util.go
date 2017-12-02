@@ -113,7 +113,6 @@ func Ordered_insert(l *[]string, item string) {
 
 	} else {
 		position := Find_position(item, *l, 0, len(*l)-1)
-		fmt.Println(*l, position)
 
 		if position == len(*l) || position == -1 {
 			*l = append(*l, item)
