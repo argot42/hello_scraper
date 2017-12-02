@@ -108,17 +108,23 @@ func Del(index int, l *[]string) {
 }
 
 func Ordered_insert(l *[]string, item string) {
-	position := Find_position(item, *l, 0, len(*l)-1)
-
-	if position == len(*l) {
+	if len(*l) == 0 {
 		*l = append(*l, item)
 
 	} else {
-		var aux []string
-		aux = append(aux, (*l)[:position]...)
-		aux = append(aux, item)
-		aux = append(aux, (*l)[position:]...)
-		*l = aux
+		position := Find_position(item, *l, 0, len(*l)-1)
+		fmt.Println(*l, position)
+
+		if position == len(*l) || position == -1 {
+			*l = append(*l, item)
+
+		} else {
+			var aux []string
+			aux = append(aux, (*l)[:position]...)
+			aux = append(aux, item)
+			aux = append(aux, (*l)[position:]...)
+			*l = aux
+		}
 	}
 }
 
