@@ -85,7 +85,7 @@ func Update_bar(file_count int, total_files int, total_written int, file_size in
 		strings.Repeat("-", barfiller),
 		strings.Repeat(" ", BAR_WIDTH-barfiller),
 		percent,
-		file_count,
+		file_count+1,
 		total_files,
 	)
 
